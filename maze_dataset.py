@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 
 class MazeDataset(Dataset):
     def __init__(self, transform=None):
-        self.image_dir = "../mazes/saved_imgs100"
-        self.mask_dir = "../mazes/mask_imgs100"
+        self.image_dir = "mazes/saved_imgs100"
+        self.mask_dir = "mazes/mask_imgs100"
         self.transform = transform
 
         self.image_files = sorted(os.listdir(self.image_dir))
