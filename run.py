@@ -12,6 +12,7 @@ from torchvision.transforms import ToTensor
 # from solveableMazeGeneration.maze_generator_dataset import MazeGeneratorDataset
 from maze_dataset import MazeDataset
 from vanilla_vae import VanillaVAE
+from torch.utils.data import DataLoader, random_split
 
 # parser = argparse.ArgumentParser(description='Generic runner for VAE models')
 # parser.add_argument('--config',  '-c',
@@ -39,24 +40,49 @@ from vanilla_vae import VanillaVAE
                         #   config['exp_params'])
 
 # data = VAEDataset(**config["data_params"], pin_memory=len(config['trainer_params']['gpus']) != 0)
-from torch.utils.data import DataLoader, random_split
+
 # data.setup()
-print(f"======= Training =======")
-input_image_path = "mazes/saved_imgs100"
+generator = torch.Generator()
+generator.manual_seed(0)
 input_channels = 3
 latent_dim = 256
 hidden_dims = [32, 64, 128, 256, 512]
-vae = VanillaVAE(input_channels, latent_dim, hidden_dims)
 num_epochs = 1000
+vae = VanillaVAE(input_channels, latent_dim, hidden_dims)
 optimizer = torch.optim.Adam(vae.parameters(), lr=1e-3)
 dataset = MazeDataset(transform=ToTensor())
-train_set, val_set = random_split(dataset, [0.8, 0.2])
+train_set, val_set = random_split(dataset, [0.8, 0.2], generator=generator)
 train_dataloader = DataLoader(train_set, batch_size=32, shuffle=True)
 val_dataloader = DataLoader(val_set, batch_size=32, shuffle=True)
-for epoch in range(num_epochs):
-    for image, _ in train_dataloader:
-        optimizer.zero_grad()
-        # image_path = os.path.join(input_image_path, image)
+
+def train():
+    print(f"======= Training =======")
+    vae.train()
+    for epoch in range(num_epochs):
+        for image, _ in train_dataloader:
+            optimizer.zero_grad()
+            # image_path = os.path.join(input_image_path, image)
+
+            recon_imgs, inputs, mu, log_var = vae.forward(image)
+            losses  = vae.loss_function(recon_imgs, inputs, mu, log_var)
+            loss = losses['loss']
+            recon_loss = losses['recon']
+            kld = losses['KLD']
+            print("LOSS: " + str(loss))
+            print("Reconstruction Loss: " + str(recon_loss))
+            print("KLD: " + str(kld))
+            loss.backward()
+            optimizer.step()
+
+    print("""======= Training Finished =======""")
+    torch.save(vae.state_dict(), 'vae.pth')
+
+def test():
+    vae = torch.load('vae.pth')
+    vae.eval()
+    for image, _ in val_dataloader:
+        result, inputs, mu, log_var = vae.forward(image)
+        val_loss = vae.loss_function(result, image)
 
         recon_imgs, inputs, mu, log_var = vae.forward(image)
         losses  = vae.loss_function(recon_imgs, inputs, mu, log_var)
@@ -66,12 +92,9 @@ for epoch in range(num_epochs):
         print("LOSS: " + str(loss))
         print("Reconstruction Loss: " + str(recon_loss))
         print("KLD: " + str(kld))
-        loss.backward()
-        optimizer.step()
 
-print("""======= Training Finished =======""")
-
-
+if __name__ == "__main__":
+    train()
 
 
 
