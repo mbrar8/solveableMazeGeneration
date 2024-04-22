@@ -90,22 +90,22 @@ class VanillaVAE(nn.Module):
         :param input: (Tensor) Input tensor to encoder [N x C x H x W]
         :return: (Tensor) List of latent codes
         """
-        print("ENCODING")
+        # print("ENCODING")
         result = self.encode1(input)
-        print(result.shape)
+        # print(result.shape)
         result = nn.BatchNorm2d(8)(result)
         result = nn.LeakyReLU()(result)
         result = self.encode2(result)
-        print(result.shape)
+        # print(result.shape)
         result = nn.BatchNorm2d(16)(result)
         result = nn.LeakyReLU()(result)
         result = self.encode3(result)
         result = nn.BatchNorm2d(32)(result)
         result = nn.LeakyReLU()(result)
-        print(result.shape)
+        # print(result.shape)
         #result = self.encoder(input)
         result = torch.flatten(result, start_dim=1)
-        print(result.shape)
+        # print(result.shape)
 
         # Split the result into mu and var components
         # of the latent Gaussian distribution
@@ -121,27 +121,27 @@ class VanillaVAE(nn.Module):
         :param z: (Tensor) [B x D]
         :return: (Tensor) [B x C x H x W]
         """
-        print("DECODING")
+        # print("DECODING")
         result = self.decoder_input(z)
-        print(result.shape)
+        # print(result.shape)
         
         #result = result.view(-1, 512, 2, 2)
         result = result.view(-1, 32, 11, 11)
         result = self.decode1(result)
         result = nn.BatchNorm2d(16)(result)
         result = nn.LeakyReLU()(result)
-        print(result.shape)
+        # print(result.shape)
         result = self.decode2(result)
         result = nn.BatchNorm2d(8)(result)
         result = nn.LeakyReLU()(result)
-        print(result.shape)
+        # print(result.shape)
         result = self.decode3(result)
         result = nn.BatchNorm2d(8)(result)
         result = nn.LeakyReLU()(result)
-        print(result.shape)
+        # print(result.shape)
         result = self.decode4(result)
         result = nn.Tanh()(result)
-        print(result.shape)
+        # print(result.shape)
         #print(result.shape)
         #result = self.decoder(result)
         #print(result.shape)

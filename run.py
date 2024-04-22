@@ -47,7 +47,7 @@ generator.manual_seed(0)
 input_channels = 3
 latent_dim = 256
 hidden_dims = [32, 64, 128, 256, 512]
-num_epochs = 1000
+num_epochs = 100
 vae = VanillaVAE(input_channels, latent_dim, hidden_dims)
 optimizer = torch.optim.Adam(vae.parameters(), lr=1e-3)
 dataset = MazeDataset(transform=ToTensor())
@@ -59,7 +59,9 @@ def train():
     print(f"======= Training =======")
     vae.train()
     for epoch in range(num_epochs):
+        print("                                                                            Epoch " + str(epoch))
         for image, _ in train_dataloader:
+            vae.train()
             optimizer.zero_grad()
             # image_path = os.path.join(input_image_path, image)
 
@@ -74,6 +76,20 @@ def train():
             loss.backward()
             optimizer.step()
 
+        if epoch % 10 == 0:
+            vae.eval()
+            print("Validation loss for epoch "  + str(epoch))
+            for image, _ in val_dataloader:
+                recon_img, inputs, mu, log_var = vae.forward(image)
+                val_loss = vae.loss_function(recon_img, inputs, mu, log_var)
+
+                loss = val_loss['loss']
+                recon_loss = val_loss['recon']
+                kld = val_loss['KLD']
+                print("LOSS: " + str(loss))
+                print("Reconstruction Loss: " + str(recon_loss))
+                print("KLD: " + str(kld))
+
     print("""======= Training Finished =======""")
     torch.save(vae.state_dict(), 'vae.pth')
 
@@ -81,14 +97,12 @@ def test():
     vae = torch.load('vae.pth')
     vae.eval()
     for image, _ in val_dataloader:
-        result, inputs, mu, log_var = vae.forward(image)
-        val_loss = vae.loss_function(result, image)
-
-        recon_imgs, inputs, mu, log_var = vae.forward(image)
-        losses  = vae.loss_function(recon_imgs, inputs, mu, log_var)
-        loss = losses['loss']
-        recon_loss = losses['recon']
-        kld = losses['KLD']
+        recon_img, inputs, mu, log_var = vae.forward(image)
+        val_loss = vae.loss_function(recon_img, inputs, mu, log_var)
+        
+        loss = val_loss['loss']
+        recon_loss = val_loss['recon']
+        kld = val_loss['KLD']
         print("LOSS: " + str(loss))
         print("Reconstruction Loss: " + str(recon_loss))
         print("KLD: " + str(kld))
