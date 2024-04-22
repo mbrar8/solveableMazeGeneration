@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 
 class MazeDataset(Dataset):
     def __init__(self, transform=None):
-        self.image_dir = "saved_imgs"
-        self.mask_dir = "mask_imgs"
+        self.image_dir = "../mazes/saved_imgs100"
+        self.mask_dir = "../mazes/mask_imgs100"
         self.transform = transform
 
         self.image_files = sorted(os.listdir(self.image_dir))
@@ -21,8 +21,11 @@ class MazeDataset(Dataset):
         img_path = os.path.join(self.image_dir, self.image_files[index])
         mask_path = os.path.join(self.mask_dir, self.mask_files[index])
 
-        img = np.array(Image.open(img_path).convert('RGB').crop((145, 60, 510, 425)))
-        mask = np.array(Image.open(mask_path).convert('RGB').crop((145, 60, 510, 425)))[:,:,0]
+        img = np.array(Image.open(img_path).convert('RGB').crop((145, 60, 510, 425)).resize((100, 100)))
+        mask = np.array(Image.open(mask_path).convert('RGB').crop((145, 60, 510, 425)).resize((100, 100)))[:,:,0]
+
+        # img = img.resize((100, 100))
+        # mask = mask.resize((100, 100))
 
         for i in range(len(mask)):
             for j in range(len(mask[0])):
