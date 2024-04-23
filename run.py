@@ -77,38 +77,29 @@ def train():
             optimizer.step()
 
         if epoch % 10 == 0:
-            vae.eval()
-            print("Validation loss for epoch "  + str(epoch))
-            for image, _ in val_dataloader:
-                recon_img, inputs, mu, log_var = vae.forward(image)
-                val_loss = vae.loss_function(recon_img, inputs, mu, log_var)
-
-                loss = val_loss['loss']
-                recon_loss = val_loss['recon']
-                kld = val_loss['KLD']
-                print("LOSS: " + str(loss))
-                print("Reconstruction Loss: " + str(recon_loss))
-                print("KLD: " + str(kld))
+            validate()
 
     print("""======= Training Finished =======""")
     torch.save(vae.state_dict(), 'vae.pth')
 
-def test():
-    vae = torch.load('vae.pth')
+def validate():
+    print(f"======= Validation =======")
     vae.eval()
     for image, _ in val_dataloader:
         recon_img, inputs, mu, log_var = vae.forward(image)
         val_loss = vae.loss_function(recon_img, inputs, mu, log_var)
-        
+
         loss = val_loss['loss']
         recon_loss = val_loss['recon']
         kld = val_loss['KLD']
-        print("LOSS: " + str(loss))
-        print("Reconstruction Loss: " + str(recon_loss))
-        print("KLD: " + str(kld))
+        print("VALIDATION LOSS: " + str(loss))
+        print("VALIDATION Reconstruction Loss: " + str(recon_loss))
+        print("VALIDATION KLD: " + str(kld))
+
 
 if __name__ == "__main__":
     train()
+    vae = torch.load('vae.pth')
 
 
 
