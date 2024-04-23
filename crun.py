@@ -44,7 +44,7 @@ from torch.utils.data import DataLoader, random_split
 # data.setup()
 generator = torch.Generator()
 generator.manual_seed(0)
-input_channels = 3
+input_channels = 4
 latent_dim = 256
 num_epochs = 100
 vae = VanillaVAE(input_channels, latent_dim)
@@ -59,12 +59,11 @@ def train():
     vae.train()
     for epoch in range(num_epochs):
         print("                                                                            Epoch " + str(epoch))
-        for image, _ in train_dataloader:
+        for image, mask in train_dataloader:
             vae.train()
             optimizer.zero_grad()
             # image_path = os.path.join(input_image_path, image)
-
-            recon_imgs, inputs, mu, log_var = vae.forward(image)
+            recon_imgs, inputs, mu, log_var = vae.forward(torch.cat((image, mask), dim=1))
             losses  = vae.loss_function(recon_imgs, inputs, mu, log_var)
             loss = losses['loss']
             recon_loss = losses['recon']
@@ -84,8 +83,8 @@ def train():
 def validate():
     print(f"======= Validation =======")
     vae.eval()
-    for image, _ in val_dataloader:
-        recon_img, inputs, mu, log_var = vae.forward(image)
+    for image, mask in val_dataloader:
+        recon_img, inputs, mu, log_var = vae.forward(torch.cat((image, mask), dim=1))
         val_loss = vae.loss_function(recon_img, inputs, mu, log_var)
 
         loss = val_loss['loss']

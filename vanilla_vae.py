@@ -13,29 +13,12 @@ class VanillaVAE(nn.Module):
     def __init__(self,
                  in_channels,
                  latent_dim,
-                 hidden_dims,
                  **kwargs) -> None:
         super(VanillaVAE, self).__init__()
 
         self.latent_dim = latent_dim
 
-        modules = []
-        if hidden_dims is None:
-            hidden_dims = [8, 16]
-
-        # Build Encoder
-        for h_dim in hidden_dims:
-            modules.append(
-                nn.Sequential(
-                    nn.Conv2d(in_channels, out_channels=h_dim,
-                              kernel_size= 3, stride=2),
-                    nn.BatchNorm2d(h_dim),
-                    nn.LeakyReLU())
-            )
-            in_channels = h_dim
-
-        #self.encoder = nn.Sequential(*modules)
-        self.encode1 = nn.Conv2d(3, 8, kernel_size=3, stride=2)
+        self.encode1 = nn.Conv2d(in_channels, 8, kernel_size=3, stride=2)
         self.encode2 = nn.Conv2d(8, 16, kernel_size=3, stride=2)
         self.encode3 = nn.Conv2d(16, 32, kernel_size=3, stride=2)
 
@@ -43,45 +26,11 @@ class VanillaVAE(nn.Module):
         self.fc_var = nn.Linear(3872, latent_dim)
 
         # Build Decoder
-        modules = []
-
         self.decoder_input = nn.Linear(latent_dim, 3872)
         self.decode1 = nn.ConvTranspose2d(32, 16, kernel_size=3, stride=2, output_padding=1)
         self.decode2 = nn.ConvTranspose2d(16, 8, kernel_size=3, stride=2, output_padding=1)
         self.decode3 = nn.ConvTranspose2d(8, 8, kernel_size=3, stride=2, output_padding=1)
-        self.decode4 = nn.Conv2d(8, 3, kernel_size=3)
-
-        hidden_dims.reverse()
-
-        for i in range(len(hidden_dims) - 1):
-            modules.append(
-                nn.Sequential(
-                    nn.ConvTranspose2d(hidden_dims[i],
-                                       hidden_dims[i + 1],
-                                       kernel_size=3,
-                                       stride = 2),
-                                       #padding=1,
-                                       #output_padding=1),
-                    nn.BatchNorm2d(hidden_dims[i + 1]),
-                    nn.LeakyReLU())
-            )
-
-
-      
-        #self.decoder = nn.Sequential(*modules)
-
-        self.final_layer = nn.Sequential(
-                            nn.ConvTranspose2d(hidden_dims[-1],
-                                               hidden_dims[-1],
-                                               kernel_size=3,
-                                               stride=2),
-                                               #padding=1,
-                                               #output_padding=1),
-                            nn.BatchNorm2d(hidden_dims[-1]),
-                            nn.LeakyReLU(),
-                            nn.Conv2d(hidden_dims[-1], out_channels= 3,
-                                      kernel_size= 3),
-                            nn.Tanh())
+        self.decode4 = nn.Conv2d(8, in_channels, kernel_size=3)
 
     def encode(self, input):
         """
